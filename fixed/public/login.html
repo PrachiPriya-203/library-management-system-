@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Access</title>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- FONT -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="login-body">
+
+    <!-- PARTICLES -->
+    <div class="particles"></div>
+
+    <!-- MAIN CARD -->
+    <div class="login-container">
+
+        <div class="login-card">
+
+            <h1 class="logo">📚 LibraryRkives</h1>
+            <p class="subtitle">Access your digital library</p>
+
+            <!-- ROLE SWITCH -->
+            <div class="role-toggle">
+                <button onclick="setRole('student')" id="studentBtn" class="active">Student</button>
+                <button onclick="setRole('admin')" id="adminBtn">Admin</button>
+            </div>
+
+            <!-- INPUTS -->
+            <div class="input-group">
+                <!-- Student fields -->
+                <div id="studentFields">
+                    <input id="roll" placeholder="ID / Roll Number">
+                    <input id="dept" placeholder="Department (CSE / IT)">
+                    <input id="password" type="password" placeholder="Password">
+                </div>
+
+                <!-- Admin fields -->
+                <div id="adminFields" style="display:none;">
+                    <input id="adminId" placeholder="Admin ID / Username">
+                    <input id="adminPassword" type="password" placeholder="Admin Password">
+                </div>
+            </div>
+
+            <!-- Error message -->
+            <p id="loginError" style="color:#ef4444; font-size:13px; display:none; margin-top:8px;"></p>
+
+            <!-- BUTTON -->
+            <button class="login-btn" onclick="login()">Enter System →</button>
+
+            <p class="subtitle" style="color: rgba(255, 255, 255, 0.7); margin-top: 20px;">
+                New user? <a href="register.html" style="color: white; font-weight: 500; text-decoration: underline;">Create an account</a>
+            </p>
+
+        </div>
+
+    </div>
+
+    <script>
+        let role = "student";
+
+        function setRole(r) {
+            role = r;
+
+            const studentBtn = document.getElementById("studentBtn");
+            const adminBtn = document.getElementById("adminBtn");
+            const studentFields = document.getElementById("studentFields");
+            const adminFields = document.getElementById("adminFields");
+            const errorEl = document.getElementById("loginError");
+
+            studentBtn.classList.remove("active");
+            adminBtn.classList.remove("active");
+
+            // Clear error
+            errorEl.style.display = "none";
+            errorEl.textContent = "";
+
+            if (r === "student") {
+                studentBtn.classList.add("active");
+                studentFields.style.display = "block";
+                adminFields.style.display = "none";
+            } else {
+                adminBtn.classList.add("active");
+                studentFields.style.display = "none";
+                adminFields.style.display = "block";
+            }
+        }
+
+        function showError(msg) {
+            const errorEl = document.getElementById("loginError");
+            errorEl.textContent = msg;
+            errorEl.style.display = "block";
+        }
+
+        async function login() {
+            const errorEl = document.getElementById("loginError");
+            errorEl.style.display = "none";
+
+            let rollValue, passwordValue;
+
+            if (role === "admin") {
+                rollValue = document.getElementById("adminId").value.trim();
+                passwordValue = document.getElementById("adminPassword").value.trim();
+            } else {
+                rollValue = document.getElementById("roll").value.trim();
+                passwordValue = document.getElementById("password").value.trim();
+            }
+
+            if (!rollValue || !passwordValue) {
+                return showError("Please fill in all fields.");
+            }
+
+            const btn = document.querySelector(".login-btn");
+            btn.disabled = true;
+            btn.textContent = "Logging in...";
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        roll: rollValue,
+                        password: passwordValue,
+                        role: role
+                    })
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    sessionStorage.setItem("user", JSON.stringify(userData));
+                    window.location.href = (userData.role === "admin") ? "admin.html" : "student.html";
+                } else {
+                    const errorText = await response.text();
+                    showError("Login Failed: " + errorText);
+                }
+            } catch (err) {
+                console.error("Login error:", err);
+                showError("Cannot connect to server. Please ensure the server is running.");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Enter System →";
+            }
+        }
+
+        // Allow Enter key to submit
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") login();
+        });
+
+        // 🔥 PARTICLES GENERATOR
+        const particles = document.querySelector(".particles");
+
+        for (let i = 0; i < 40; i++) {
+            let p = document.createElement("span");
+            p.style.left = Math.random() * 100 + "vw";
+            p.style.animationDuration = (Math.random() * 5 + 5) + "s";
+            p.style.opacity = Math.random();
+            particles.appendChild(p);
+        }
+    </script>
+
+</body>
+
+</html>
